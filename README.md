@@ -167,15 +167,15 @@ getItemCount(): number - получение количества товаров 
 Конструктор класс не принимает параметров
 
 Поля класса: private payment: TPayment | null = null; - вид оплаты
-private address: string | null = null; - адреc
-private phone: string | null = null; - телефон
-private email: string | null = null; - email
+private address: string = ""; - адреc
+private phone: string = ""; - телефон
+private email: string = ""; - email
 
 Методы класса:
 updateData(data: Partial<IBuyer>): void; - сохранение данных в модели
 getData(): IBuyer - получение всех данных покупателя
 clearData(): void - очистка данных покупателя
-validateData(): Record<string, string> - валидация данных
+validateData(): ValidationErrors<IBuyer> - валидация данных
 
 ### Слой коммуникации
 

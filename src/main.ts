@@ -1,7 +1,7 @@
-import { ProductCatalog } from "./components/base/Models/ProductCatalog";
-import { Cart } from "./components/base/Models/Cart";
-import { Buyer } from "./components/base/Models/Buyer";
-import { ApiClient } from "./components/base/Models/ApiClient";
+import { ProductCatalog } from "./components/Models/ProductCatalog";
+import { Cart } from "./components/Models/Cart";
+import { Buyer } from "./components/Models/Buyer";
+import { ApiClient } from "./components/Models/ApiClient";
 import { Api } from "./components/base/Api";
 import { apiProducts } from "./utils/data";
 import { API_URL } from "./utils/constants";
@@ -11,6 +11,8 @@ import { TPayment } from "./types";
 const productCatalog = new ProductCatalog();
 const cart = new Cart();
 const buyer = new Buyer();
+const apiInstance = new Api(API_URL);
+const apiClient = new ApiClient(apiInstance);
 
 console.log("1. Проверка методов ProductCatalog");
 
@@ -69,6 +71,8 @@ console.log("2.5 Проверка наличия товара в корзине"
 console.log("2.5.1 Проверка до добавления товара в корзину");
 
 cart.clear();
+const emptyCartItems = cart.getItems();
+console.log("Корзина после очистки:", [...emptyCartItems]);
 
 const existsBefore = cart.hasItem(firstItem.id);
 
@@ -89,7 +93,7 @@ const existsAfter = cart.hasItem(firstItem.id);
 if (existsAfter) {
   console.log("Товар успешно добавлен. hasItem вернул true");
 } else {
-  console.log("ошибка: Товар добавлен, но hasItem вернул true");
+  console.log("ошибка: Товар добавлен, но hasItem вернул false");
 }
 
 console.log(
@@ -179,12 +183,13 @@ if (Object.keys(errorsValid).length === 0) {
 async function loadProductsFromServer() {
   try {
     console.log(`Инициализируем клиент API: ${API_URL}`);
-    const apiInstance = new Api(API_URL);
-    const apiClient = new ApiClient(apiInstance);
     const serverResponse = await apiClient.getProducts();
     productCatalog.setProducts(serverResponse.items);
-
-    console.log("Данные успешно получены с сервера");
+    const catalogProducts = productCatalog.getProducts();
+    console.log(
+      "Данные успешно получены и сохранены в модель. Товары из каталога:",
+      catalogProducts,
+    );
     console.log(`Сервер вернул метаданные: total = ${serverResponse.total} `);
   } catch (error) {
     console.log("Произошла ошибка инициализации и получения данных с сервера");
