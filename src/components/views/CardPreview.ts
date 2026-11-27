@@ -1,10 +1,10 @@
-import { Card } from "./Card";
+import { CardWithImage } from "./CardWithImage";
 
 interface ICardPreviewActions {
   onToggle: () => void;
 }
 
-export class CardPreview extends Card {
+export class CardPreview extends CardWithImage {
   constructor(container: HTMLElement, actions?: ICardPreviewActions) {
     super(container);
 
@@ -21,11 +21,6 @@ export class CardPreview extends Card {
         actions.onToggle();
       });
     }
-  }
-
-  set text(value: string) {
-    const textElement = this.container.querySelector(".card__text");
-    if (textElement) textElement.textContent = value;
   }
 
   set button(value: string) {
