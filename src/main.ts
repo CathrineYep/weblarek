@@ -19,6 +19,9 @@ import "./scss/styles.scss";
 
 const events = new EventEmitter();
 
+const apiInstance = new Api(API_URL);
+const apiClient = new ApiClient(apiInstance);
+
 const productCatalog = new ProductCatalog(events);
 const cart = new Cart(events);
 const buyer = new Buyer(events);
@@ -44,9 +47,6 @@ console.log("[Presenter] Все компоненты инициализиров�
 
 (async () => {
   try {
-    const apiInstance = new Api(API_URL);
-    const apiClient = new ApiClient(apiInstance);
-
     console.log("[Presenter] Загрузка товаров с сервера...");
     const response = await apiClient.getProducts();
 
@@ -99,7 +99,7 @@ const syncPreviewButton = () => {
     return;
   }
 
-  const isInBasket = cart.getItems().some((item) => item.id === product.id);
+  const isInBasket = cart.hasItem(product.id);
   previewCard.button = isInBasket ? "Удалить из корзины" : "Купить";
   previewCard.buttonDisabled = false;
 };
@@ -127,9 +127,9 @@ events.on("preview:toggle", () => {
   const product = productCatalog.getSelectedProduct();
   if (!product) return;
 
-  const inBasket = cart.getItems().find((item) => item.id === product.id);
+  const inBasket = cart.hasItem(product.id);
   if (inBasket) {
-    cart.removeItem(inBasket);
+    cart.removeItem(product);
   } else {
     cart.addItem(product);
   }
@@ -189,9 +189,6 @@ const contactsForm = new ContactsForm(
 
       (async () => {
         try {
-          const apiInstance = new Api(API_URL);
-          const apiClient = new ApiClient(apiInstance);
-
           const response = await apiClient.sendOrder(orderData);
           console.log("[Presenter] Заказ успешно отправлен!");
 

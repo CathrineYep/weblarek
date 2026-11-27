@@ -20,6 +20,10 @@ export class Cart {
     return this.items.reduce((sum, item) => sum + (item.price || 0), 0);
   }
 
+  hasItem(id: string): boolean {
+    return this.items.some((item) => item.id === id);
+  }
+
   addItem(product: IProduct): void {
     this.items.push(product);
     this.events.emit("item:added", product);
