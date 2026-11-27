@@ -169,43 +169,8 @@ const contactsContainer = cloneTemplate(contactsTemplate);
 const contactsForm = new ContactsForm(
   contactsContainer,
   (eventName, payload) => {
-    if (eventName === "field:change") {
-      buyer.updateData({ [payload.name]: payload.value });
-    }
-
-    if (eventName === "form:submit") {
-      const data = buyer.getData();
-
-      console.log("[Presenter] Отправка заказа на сервер...");
-
-      const orderData = {
-        payment: data.payment,
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-        total: cart.getTotal(),
-        items: cart.getItems().map((item) => item.id),
-      };
-
-      (async () => {
-        try {
-          const response = await apiClient.sendOrder(orderData);
-          console.log("[Presenter] Заказ успешно отправлен!");
-
-          successModal.price = response.total;
-
-          modal.render({
-            content: successModal.render(),
-          });
-
-          cart.clearData();
-          buyer.clearData();
-        } catch (error) {
-          console.error("[Presenter] Ошибка отправки:", error);
-          alert("Не удалось оформить заказ. Попробуйте позже.");
-        }
-      })();
-    }
+    if (eventName === "field:change") events.emit("field:change", payload);
+    if (eventName === "form:submit") events.emit("contacts:submit");
   },
 );
 
@@ -217,17 +182,55 @@ if (!orderTemplate) throw new Error("Шаблон #order не найден!");
 const orderContainer = cloneTemplate(orderTemplate);
 
 const orderForm = new OrderForm(orderContainer, (eventName, payload) => {
-  if (eventName === "field:change") {
-    buyer.updateData({ [payload.name]: payload.value });
-  }
+  if (eventName === "field:change") events.emit("field:change", payload);
+  if (eventName === "form:submit") events.emit("order:submit");
+});
 
-  if (eventName === "form:submit") {
-    console.log("[Presenter] Шаг 1 пройден. Переход к Шагу 2...");
+// ОБРАБОТКА СОБЫТИЙ ФОРМ
 
-    modal.render({
-      content: contactsForm.render(),
-    });
-  }
+events.on("field:change", (payload: { name: string; value: string }) => {
+  buyer.updateData({ [payload.name]: payload.value });
+});
+
+events.on("order:submit", () => {
+  console.log("[Presenter] Шаг 1 пройден. Переход к Шагу 2...");
+  modal.render({
+    content: contactsForm.render(),
+  });
+});
+
+events.on("contacts:submit", () => {
+  console.log("[Presenter] Отправка заказа на сервер...");
+
+  const currentData = buyer.getData();
+
+  const orderData = {
+    payment: currentData.payment,
+    email: currentData.email,
+    phone: currentData.phone,
+    address: currentData.address,
+    total: cart.getTotal(),
+    items: cart.getItems().map((item) => item.id),
+  };
+
+  (async () => {
+    try {
+      const response = await apiClient.sendOrder(orderData);
+      console.log("[Presenter] Заказ успешно отправлен!");
+
+      successModal.price = response.total;
+
+      modal.render({
+        content: successModal.render(),
+      });
+
+      cart.clearData();
+      buyer.clearData();
+    } catch (error) {
+      console.error("[Presenter] Ошибка отправки:", error);
+      alert("Не удалось оформить заказ. Попробуйте позже.");
+    }
+  })();
 });
 
 const syncForms = () => {

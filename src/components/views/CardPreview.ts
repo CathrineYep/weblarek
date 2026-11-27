@@ -39,7 +39,6 @@ export class CardPreview extends Card {
       this.buyButton.disabled = value;
 
       if (value) {
-        this.buyButton.classList.remove("button_alt");
         this.buyButton.classList.add("button_alt-disabled");
       } else {
         this.buyButton.classList.remove("button_alt-disabled");
