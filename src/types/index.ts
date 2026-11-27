@@ -15,7 +15,6 @@ export enum TPayment {
   CARD = "card",
   CASH = "cash",
 }
-
 export interface IProduct {
   id: string;
   description: string;

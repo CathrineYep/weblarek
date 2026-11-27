@@ -1,4 +1,7 @@
 import { IBuyer, ValidationErrors, TPayment } from "../../types";
+import { EventEmitter } from "../base/Events";
+
+export type BuyerEvent = "data:updated" | "data:cleared" | "validation:updated";
 
 export class Buyer {
   private payment: TPayment | null = null;
@@ -6,21 +9,47 @@ export class Buyer {
   private phone: string = "";
   private email: string = "";
 
+  constructor(private events: EventEmitter) {}
+
   updateData(data: Partial<IBuyer>): void {
-    if (data.payment !== undefined) {
+    let hasChanges = false;
+
+    if (data.payment !== undefined && data.payment !== this.payment) {
       this.payment = data.payment;
+      hasChanges = true;
     }
 
     if (data.address !== undefined) {
-      this.address = data.address.trim();
+      const trimmed = data.address.trim();
+      if (trimmed !== this.address) {
+        this.address = trimmed;
+        hasChanges = true;
+      }
     }
 
     if (data.phone !== undefined) {
-      this.phone = data.phone.trim();
+      const trimmed = data.phone.trim();
+      if (trimmed !== this.phone) {
+        this.phone = trimmed;
+        hasChanges = true;
+      }
     }
 
     if (data.email !== undefined) {
-      this.email = data.email.trim();
+      const trimmed = data.email.trim();
+      if (trimmed !== this.email) {
+        this.email = trimmed;
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      this.events.emit("data:updated", data);
+
+      this.events.emit("validation:updated", {
+        errors: this.getErrors(),
+        isValid: this.isValid(),
+      });
     }
   }
 
@@ -33,11 +62,22 @@ export class Buyer {
     };
   }
 
+  isValid(): boolean {
+    const errors = this.validateData();
+    return Object.keys(errors).length === 0;
+  }
+
+  getErrors(): ValidationErrors<IBuyer> {
+    return this.validateData();
+  }
+
   clearData(): void {
     this.payment = null;
     this.address = "";
     this.phone = "";
     this.email = "";
+
+    this.events.emit("data:cleared");
   }
 
   validateData(): ValidationErrors<IBuyer> {
@@ -51,12 +91,27 @@ export class Buyer {
       errors.address = "Укажите адрес";
     }
 
-    if (!this.phone) {
-      errors.phone = "Укажите телефон";
+    if (!this.email) {
+      errors.email = "Введите email";
+    } else {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(this.email)) {
+        errors.email = "Некорректный формат email";
+      }
     }
 
-    if (!this.email) {
-      errors.email = "Укажите email";
+    if (!this.phone) {
+      errors.phone = "Введите телефон";
+    } else {
+      const phoneRegex = /^[\d\s\-\+\(\)]{10,}$/;
+
+      const hasLetters = /[a-z]/i.test(this.phone);
+
+      if (hasLetters) {
+        errors.phone = "Телефон не должен содержать буквы";
+      } else if (!phoneRegex.test(this.phone)) {
+        errors.phone = "Некорректный формат телефона";
+      }
     }
 
     return errors;
