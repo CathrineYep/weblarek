@@ -16,6 +16,8 @@ import { Api } from "./components/base/Api";
 import { IProduct } from "./types";
 import { cloneTemplate } from "./utils/utils";
 import "./scss/styles.scss";
+import { CardBasket } from "./components/views/CardBasket";
+import { CardCatalog } from "./components/views/CardCatalog";
 
 const events = new EventEmitter();
 
@@ -27,10 +29,9 @@ const cart = new Cart(events);
 const buyer = new Buyer(events);
 
 const modal = new Modal(document.querySelector(".modal") as HTMLElement);
-const gallery = new Gallery(
-  events,
-  document.querySelector(".gallery") as HTMLElement,
-);
+
+const gallery = new Gallery(document.querySelector(".gallery") as HTMLElement);
+
 const headerContainer = document.querySelector(".header") as HTMLElement;
 const header = new Header(headerContainer, {
   onCartClick: () => {
@@ -68,7 +69,25 @@ events.on("products:updated", (products: IProduct[]) => {
   console.log(
     `[Presenter] Получено ${products.length} товаров. Начинаем отрисовку.`,
   );
-  gallery.catalog = products;
+
+  const catalogTemplate = document.getElementById(
+    "card-catalog",
+  ) as HTMLTemplateElement;
+
+  const cards = products.map((product) => {
+    const cardElement = cloneTemplate(catalogTemplate);
+    const card = new CardCatalog(cardElement, {
+      onBuy: () => events.emit("card:clicked", product),
+    });
+    return card.render({
+      title: product.title,
+      price: product.price,
+      image: `${CDN_URL}${product.image}`,
+      category: product.category,
+    });
+  });
+
+  gallery.catalog = cards;
   console.log("[Presenter] Галерея отрисована.");
 });
 
@@ -209,7 +228,7 @@ events.on("contacts:submit", () => {
     email: currentData.email,
     phone: currentData.phone,
     address: currentData.address,
-    total: cart.getTotal(),
+    total: cart.getTotalPrice(),
     items: cart.getItems().map((item) => item.id),
   };
 
@@ -224,7 +243,7 @@ events.on("contacts:submit", () => {
         content: successModal.render(),
       });
 
-      cart.clearData();
+      cart.clear();
       buyer.clearData();
     } catch (error) {
       console.error("[Presenter] Ошибка отправки:", error);
@@ -270,9 +289,26 @@ events.on("basket:updated", () => {
 
   const items = cart.getItems();
 
+  const basketCardTemplate = document.getElementById(
+    "card-basket",
+  ) as HTMLTemplateElement;
+
+  const basketCards = items.map((product, index) => {
+    const cardElement = cloneTemplate(basketCardTemplate);
+    const card = new CardBasket(cardElement, {
+      onDelete: () => events.emit("basket:remove", product),
+    });
+
+    card.title = product.title;
+    card.price = product.price;
+    card.index = index + 1;
+
+    return card.render();
+  });
+
   header.counter = items.length;
-  basket.items = items;
-  basket.total = cart.getTotal();
+  basket.items = basketCards;
+  basket.total = cart.getTotalPrice();
   basket.isButtonDisabled = items.length === 0;
 
   syncPreviewButton();

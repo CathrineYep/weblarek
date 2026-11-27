@@ -3,6 +3,8 @@ import { Component } from "../base/Component";
 export interface ICardData {
   title: string;
   price: number | null;
+  image?: string;
+  category?: string;
 }
 
 export class Card extends Component<ICardData> {

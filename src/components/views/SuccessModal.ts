@@ -1,6 +1,9 @@
 import { Component } from "../base/Component";
 
-export class SuccessModal extends Component<any> {
+export interface ISuccessModalData {
+  price: number;
+}
+export class SuccessModal extends Component<ISuccessModalData> {
   private descriptionElement: HTMLElement | null = null;
   private onCloseCallback: () => void;
 

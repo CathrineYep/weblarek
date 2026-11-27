@@ -1,14 +1,10 @@
 import { Component } from "../base/Component";
 import { IEvents } from "../base/Events";
-import { IProduct } from "../../types";
-import { CardBasket } from "./CardBasket";
-import { cloneTemplate } from "../../utils/utils";
 
 export class Basket extends Component<any> {
   private totalElement: HTMLElement | null = null;
   private orderButton: HTMLButtonElement | null = null;
   private itemsList: HTMLElement | null = null;
-  private cardTemplate: HTMLTemplateElement | null;
 
   constructor(
     container: HTMLElement,
@@ -21,9 +17,6 @@ export class Basket extends Component<any> {
       ".basket__button",
     ) as HTMLButtonElement;
     this.itemsList = container.querySelector(".basket__list");
-    this.cardTemplate = document.getElementById(
-      "card-basket",
-    ) as HTMLTemplateElement | null;
 
     if (this.orderButton) {
       this.orderButton.addEventListener("click", () => {
@@ -33,20 +26,8 @@ export class Basket extends Component<any> {
     }
   }
 
-  set items(products: IProduct[]) {
-    if (!this.itemsList || !this.cardTemplate) return;
-
-    const cards = products.map((product, index) => {
-      const cardElement = cloneTemplate(this.cardTemplate!);
-      const card = new CardBasket(cardElement, {
-        onDelete: () => this.events.emit("basket:remove", product),
-      });
-      card.title = product.title;
-      card.price = product.price;
-      card.index = index + 1;
-      return card.render();
-    });
-
+  set items(cards: HTMLElement[]) {
+    if (!this.itemsList) return;
     this.itemsList.replaceChildren(...cards);
   }
 
